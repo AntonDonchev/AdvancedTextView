@@ -36,6 +36,7 @@ public class AdvancedTextView extends View {
 
 	private void init() {
 		content = new ArrayList<Text>();
+		setBackgroundColor(Color.RED);
 	}
 
 	public void addText(Text text) {
@@ -141,11 +142,17 @@ public class AdvancedTextView extends View {
 
 		float left = getPaddingLeft();
 		float top = getPaddingTop();
+		float bottom = getPaddingBottom();
+		float right = 0;
+		int count = content.size();
 
-		for (int i = 0; i < content.size(); i++) {
+		for (int i = 0; i < count; i++) {
 			Text t = content.get(i);
-			t.draw(canvas, left, top);
+			t.draw(canvas, left, top, right, bottom);
 			left += t.width + textGap;
+			if (i == count) {
+				right = getPaddingRight();
+			}
 		}
 	}
 
@@ -260,20 +267,20 @@ public class AdvancedTextView extends View {
 			this.gravity = gravity;
 		}
 
-		protected void draw(Canvas canvas, float left, float top) {
+		protected void draw(Canvas canvas, float left, float top, float right, float bottom) {
 			if (text != null) {
 				String[] lines = text.split("\n");
 				if (lines != null) {
 					float x;
 					float y;
 					if (lines.length == 1) {
-						x = getLeftDrawPosition(text, left);
-						y = getTopDrawPosition(text, top);
+						x = getLeftDrawPosition(text, left, right);
+						y = getTopDrawPosition(top, bottom);
 						canvas.drawText(text, x, y, textPaint);
 					} else if (lines.length > 1) {
-						y = top - textPaint.ascent();
+						y = getTopDrawPosition(top, bottom);
 						for (int i = 0; i < lines.length; i++) {
-							x = getLeftDrawPosition(lines[i], left);
+							x = getLeftDrawPosition(lines[i], left, right);
 							canvas.drawText(lines[i], x, y, textPaint);
 							y += textPaint.descent() - textPaint.ascent();
 						}
@@ -282,10 +289,11 @@ public class AdvancedTextView extends View {
 			}
 		}
 
-		private float getLeftDrawPosition(String text, float left) {
+		private float getLeftDrawPosition(String text, float left, float right) {
+			int gravity = this.gravity & Gravity.HORIZONTAL_GRAVITY_MASK;
 			switch (gravity) {
 			case Gravity.RIGHT:
-				return width - textPaint.measureText(text);
+				return width - (right + textPaint.measureText(text));
 			case Gravity.CENTER:
 			case Gravity.CENTER_HORIZONTAL:
 				return left + (width - textPaint.measureText(text)) / 2;
@@ -295,13 +303,17 @@ public class AdvancedTextView extends View {
 			}
 		}
 
-		private float getTopDrawPosition(String text, float top) {
+		private float getTopDrawPosition(float top, float bottom) {
+			int gravity = this.gravity & Gravity.VERTICAL_GRAVITY_MASK;
 			switch (gravity) {
 			case Gravity.CENTER:
 			case Gravity.CENTER_VERTICAL:
-				return top + (height - (textPaint.descent() - textPaint.ascent())) / 2;
+				float rectHeight = getMeasuredHeight();
+				float baselineDescend = -((height / 2) + textPaint.ascent());
+				float center = (rectHeight + top - bottom) / 2;
+				return center + baselineDescend;
 			case Gravity.BOTTOM:
-				return height - textPaint.descent();
+				return getMeasuredHeight() - (bottom + textPaint.descent());
 			case Gravity.TOP:
 			default:
 				return top - textPaint.ascent();
