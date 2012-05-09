@@ -36,7 +36,7 @@ public class AdvancedTextView extends View {
 
 	private void init() {
 		content = new ArrayList<Text>();
-		setBackgroundColor(Color.RED);
+//		setBackgroundColor(Color.RED);
 	}
 
 	public void addText(Text text) {
